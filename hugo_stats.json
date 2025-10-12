@@ -5,6 +5,7 @@
       "abbr",
       "blockquote",
       "body",
+      "cite",
       "code",
       "del",
       "div",
@@ -44,6 +45,7 @@
       "th",
       "thead",
       "title",
+      "token",
       "tr",
       "ul"
     ],

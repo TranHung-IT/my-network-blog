@@ -46,3 +46,11 @@ menu:
     - name: "Blog"
       url: "/blog/"           # Route cho trang blog
       weight: 2
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true  # Cho phép raw HTML, hoặc dùng ignoreLogs nếu chỉ suppress warn
+# Hoặc chỉ suppress warn (không cho phép raw HTML):
+ignoreLogs:
+  - "warning-goldmark-raw-html"
