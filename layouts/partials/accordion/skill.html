@@ -1,0 +1,27 @@
+{{ $skill := .Site.Params.skill }}
+{{ if $skill }}
+  <div id="{{ $skill.panelId }}" class="section px-6 py-4">
+    {{ range $skill.list }}
+    <div class="mb-4">
+      <code class="text-sm font-mono block mb-1">{{ .skill }}</code>
+      <div class="w-full mt-1 mb-3 border border-black dark:border-gray-300 rounded-sm" style="height: 1.25rem;">
+        <div class="skill-bar bg-blue-500 dark:bg-yellow-700 h-full rounded-sm transition-all duration-1000" 
+             style="width: 0%;" 
+             data-rating="{{ .skillrating }}"></div>
+      </div>
+    </div>
+    {{ end }}
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        let skillBars = document.querySelectorAll(".skill-bar");
+        skillBars.forEach(elem => {
+          let percent = elem.getAttribute("data-rating");
+          elem.style.width = percent + "%";
+        });
+      }, 500);
+    });
+  </script>
+{{ end }}

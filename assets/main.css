@@ -1,0 +1,212 @@
+@import "tailwindcss";
+@config './tailwind.config.js';
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-700, currentColor);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+      border-color: var(--color-gray-200, currentColor);
+    }
+  }
+}
+
+@layer utilities {
+  h1 {
+    @apply text-3xl mb-5 mt-1 font-bold tracking-wide uppercase;
+  }
+
+  h2 {
+    @apply text-3xl mb-3 mt-1 font-bold tracking-tight capitalize;
+  }
+
+  h3 {
+    @apply text-2xl mb-3 mt-1 font-semibold tracking-wide;
+  }
+
+  h4 {
+    @apply text-xl mb-2 mt-1 font-semibold;
+  }
+
+  h5 {
+    @apply text-lg mb-2 mt-1 font-medium italic;
+  }
+
+  a {
+    @apply text-[#465C88] hover:text-[#5A6F9E] hover:underline dark:text-[#739EC9] dark:hover:text-[#5A94C9] font-semibold tracking-wide underline decoration-1 underline-offset-2;
+  }
+
+  body {
+    @apply text-base bg-stone-50 dark:text-white dark:bg-darkest font-medium;
+  }
+
+  summary {
+    @apply block text-sm font-semibold;
+  }
+
+  blockquote {
+    @apply bg-gray-100 dark:bg-dark rounded-sm italic;
+  }
+
+  p {
+    @apply mt-2 mb-2 font-medium;
+  }
+
+  .highlight {
+    font-family: Monaco, 'Courier New', monospace !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .highlight .k,
+  .highlight .kc,
+  .highlight .kd {
+    color: #007acc !important;
+  }
+
+  .highlight .nf {
+    color: #795e26 !important;
+  }
+
+  .highlight .na {
+    color: #808080 !important;
+  }
+
+  .highlight .s,
+  .highlight .ss {
+    color: #ce9178 !important;
+  }
+
+  .highlight .c,
+  .highlight .c1 {
+    color: #808080 !important;
+  }
+
+  .highlight .nb,
+  .highlight .n {
+    color: #000000 !important;
+  }
+
+  .highlight .o {
+    color: #000000 !important;
+  }
+
+  .highlight .bp {
+    color: #000000 !important;
+  }
+
+  @media (prefers-color-scheme: dark),
+  .dark .highlight {
+    .highlight .k,
+    .highlight .kc,
+    .highlight .kd {
+      color: #569cd6 !important;
+    }
+
+    .highlight .nf {
+      color: #dcdcaa !important;
+    }
+
+    .highlight .na {
+      color: #9cdcfe !important;
+    }
+
+    .highlight .s,
+    .highlight .ss {
+      color: #ce9178 !important;
+    }
+
+    .highlight .c,
+    .highlight .c1 {
+      color: #6a9955 !important;
+    }
+
+    .highlight .nb,
+    .highlight .n {
+      color: #b5cea8 !important;
+    }
+
+    .highlight .o {
+      color: #d4d4d4 !important;
+    }
+
+    .highlight .bp {
+      color: #d4d4d4 !important;
+    }
+  }
+
+  .post-meta,
+  .entry-meta,
+  .article-meta,
+  [class="meta"],
+  .categories-tags {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
+}
+
+@layer components {
+  ul.pagination {
+    @apply flex flex-row justify-center;
+
+    li {
+      @apply border border-gray-500 dark:border-[#739EC9] flex justify-center items-center;
+    }
+
+    .page-link {
+      @apply px-2 sm:px-4 py-1 hover:text-gray-200 dark:hover:text-gray-800 hover:bg-blue-500 dark:hover:bg-[#739EC9] font-semibold;
+    }
+
+    .active {
+      @apply bg-blue-500 pointer-events-none dark:bg-[#739EC9];
+
+      .page-link {
+        @apply text-gray-200 dark:text-gray-800 font-bold;
+      }
+    }
+  }
+
+  .categories {
+    @apply p-1 mr-2 mb-2 text-sm rounded-sm hover:shadow-sm;
+    @apply text-green-800! bg-green-100! hover:bg-green-200! border! border-green-600! dark:border-green-100! font-semibold tracking-wide;
+  }
+
+  .tags {
+    @apply p-1 mr-2 mb-2 text-sm rounded-sm hover:shadow-sm;
+    @apply text-gray-800! bg-gray-200! hover:bg-gray-300! border! border-gray-600! dark:border-gray-100! font-semibold;
+  }
+
+  .nav {
+    @apply text-lg text-[#465C88] dark:text-white font-semibold tracking-wide uppercase;
+  }
+
+  .nav-menu-item {
+    @apply hover:no-underline p-2 rounded-sm hover:bg-gray-200 dark:hover:bg-gray-800 font-medium;
+  }
+
+  .active {
+    @apply overflow-visible;
+  }
+
+  .prose ul,
+  .prose ol {
+    @apply marker:text-gray-700 dark:marker:text-gray-200 font-medium;
+  }
+
+  .accordion {
+    @apply text-[#465C88] dark:text-[#739EC9] my-0 font-medium tracking-tight normal-case;
+
+    p {
+      @apply my-0 p-2 hover:bg-gray-300 rounded-sm dark:hover:bg-darker font-semibold;
+    }
+  }
+}

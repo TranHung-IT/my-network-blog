@@ -1,0 +1,5 @@
+<ul class="list-disc pl-4 space-y-2 prose prose-stone dark:prose-invert max-w-none">  <!-- Thêm prose-stone để chữ và bullet mờ (faded), giống experience -->
+  {{ range .Site.Params.hobby.list }}
+  <li class="mb-0">{{ .hobby }}</li>
+  {{ end }}
+</ul>

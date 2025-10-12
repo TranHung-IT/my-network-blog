@@ -1,0 +1,13 @@
+{{ range .Site.Params.project.list }}
+<div class="py-1 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+  <h4 class="text-lg font-medium mb-1" style="text-decoration: underline;">{{ .title }}</h4>  <!-- Gạch chân trắng, không link màu xanh -->
+  {{ if .dates }}
+  <p class="text-base text-gray-600 dark:text-gray-400 mb-2">{{ .dates }}</p>  <!-- text-base để match size với experience -->
+  {{ end }}
+  {{ if .description }}
+    <div class="prose prose-stone max-w-none dark:prose-invert pl-4">  <!-- prose-stone để match size và style với experience -->
+      {{ .description | markdownify }}
+    </div>
+  {{ end }}
+</div>
+{{ end }}

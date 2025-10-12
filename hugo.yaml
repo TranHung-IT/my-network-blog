@@ -1,0 +1,48 @@
+baseURL: "https://TranHung-IT.github.io/my-network-blog/"  # Đổi thành domain thật khi deploy
+languageCode: "en-us"
+title: "My Network Blog"  # Tên site của bạn
+theme: "aafu"  # Kích hoạt theme
+
+# Cấu hình params cho theme Aafu
+params:
+  # Theme mode: light, dark, hoặc null (auto theo thiết bị)
+  theme:
+    mainTheme: null
+
+  # Sections cho accordion trên home page (thay đổi order hoặc enable/disable)
+  sections:
+    - name: "Hero"          # Section giới thiệu chính
+      enabled: true
+      weight: 1
+    - name: "About"         # Giới thiệu bản thân
+      enabled: true
+      weight: 2
+    - name: "Projects"      # Portfolio items (danh mục dự án)
+      enabled: true
+      weight: 3
+    - name: "Blog"          # Teaser blog posts
+      enabled: true
+      weight: 4
+    - name: "Contact"       # Form liên hệ
+      enabled: true
+      weight: 5
+
+  # Profile settings
+  profile:
+    name: "Trần Việt Hưng"       # Tên bạn
+    tagline: "-- Code vs. Me --"  # Mô tả ngắn   Exploring Java & Networking: Code Today, Connect Tomorrow
+    email: "your.email@example.com"
+    # Thêm social links nếu cần (GitHub, LinkedIn, etc.)
+    social:
+      github: "yourusername"
+      linkedin: "yourprofile"
+
+# Menu (tùy chọn, theme dùng accordion nên menu đơn giản)
+menu:
+  main:
+    - name: "Home"
+      url: "/"
+      weight: 1
+    - name: "Blog"
+      url: "/blog/"           # Route cho trang blog
+      weight: 2

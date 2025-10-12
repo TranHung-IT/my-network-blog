@@ -1,0 +1,10 @@
+{{ $aboutme := .Site.Params.aboutme }}
+{{ if $aboutme }}
+  <div class="section px-1 py-1">
+    {{ if $aboutme.description }}
+      <div class="prose max-w-none dark:prose-invert pl-0">  <!-- pl-0 để force sát lề trái, không tab ra -->
+        {{ $aboutme.description | markdownify }}
+      </div>
+    {{ end }}
+  </div>
+{{ end }}

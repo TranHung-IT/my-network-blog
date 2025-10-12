@@ -1,0 +1,6 @@
+# Tạo/cập nhật .gitignore
+@"
+public/
+resources/
+.hugo_build.lock
+"@ | Out-File -FilePath .gitignore -Encoding UTF8

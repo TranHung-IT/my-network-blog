@@ -1,0 +1,196 @@
+baseURL: "https://TranHung-IT.github.io/my-network-blog/"
+languageCode: en-us
+build:
+  writeStats: true
+title: aafu theme
+theme: aafu  # Uncomment để sử dụng theme aafu
+
+params:
+  home:
+    sections:
+      - name: aboutme
+        enabled: true
+        weight: 1
+      - name: experience
+        enabled: true
+        weight: 2
+      - name: education
+        enabled: true
+        weight: 3
+      - name: badge
+        enabled: true
+        weight: 4
+      - name: project
+        enabled: true
+        weight: 5
+      - name: skill
+        enabled: true
+        weight: 6
+      - name: hobby
+        enabled: true
+        weight: 7
+  author: Darshan Baral
+  description: Website title
+  copyright: >-
+    powered by [hugo](https://gohugo.io/)
+  theme:
+    mainTheme: dark
+    showAttribute: true
+    singlePage: false  
+
+  profile:
+    name: "Trần Việt Hưng"
+    tagline: Title
+    location: "Lâm Đồng - Việt Nam"
+    photo: profile.jpg
+  social:
+    title: Links
+    list:
+      - icon: fab fa-linkedin-in
+        url: "#"
+        title: LinkedIn
+      - icon: fab fa-stack-overflow
+        url: "#"
+        title: StackOverflow
+      - icon: fab fa-github
+        url: "#"
+        title: GitHub
+      - icon: fab fa-twitter
+        url: "#"
+        title: Twitter
+      - icon: fab fa-orcid
+        url: "#"
+        title: Orcid
+      - icon: ai ai-google-scholar
+        url: "#"
+        title: Google Scholar
+      - icon: fab fa-researchgate
+        url: "#"
+        title: ResearchGate
+  showInAccordion:
+    - item: aboutme
+      expand: true
+    - item: experience
+    - item: education
+    - item: badge
+    - item: project
+    - item: skill
+    - item: hobby
+  aboutme:
+    title: Giới thiệu bản thân
+    icon: fas fa-user
+    description: |1-
+      - Xin chào! Tôi là **Trần Việt Hưng** — sinh viên ngành **Công nghệ thông tin, chuyên ngành Công nghệ phần mềm** tại trường **Đại học Công nghệ Thành phố Hồ Chí Minh** **(HUTECH)**.
+      - Tôi yêu thích lập trình, công nghệ và các giải pháp ứng dụng thực tế. Mục tiêu của tôi là trở thành **kỹ sư phần mềm**.
+      - Liên hệ với tôi qua:
+
+        📧 Email: [tranhung04082004@gmail.com](mailto:tranhung04082004@gmail.com)
+
+        💻 GitHub: [github.com/TranHung-IT](https://github.com/TranHung-IT)
+
+        🔗 LinkedIn: [linkedin.com/in/hưng-trần-b87909353](https://www.linkedin.com/in/h%C6%B0ng-tr%E1%BA%A7n-b87909353/)
+  experience:
+    title: Kinh nghiệm
+    icon: fas fa-briefcase
+    list:
+      - position: Lập trình viên (sinh viên)
+        dates: 2022 - Nay
+        company: Đại học HUTECH
+        details: |1-
+          - Thành thạo ngôn ngữ **C#, Java, JavaScript**.  
+          - Sử dụng tốt **Visual Studio**, **VS Code**, **SQL Server Management Studio**.  
+          - Có kiến thức nền tảng về **lập trình mạng**, **công nghệ phần mềm**, và **bảo mật thông tin**.  
+          - Tham gia hỗ trợ bạn bè trong các bài tập nhóm về **SQL Server** và **mã hóa dữ liệu**.  
+          - Hoàn thành các môn trọng điểm: *Cơ sở dữ liệu, Lập trình hướng đối tượng, Lập trình mạng, Công nghệ phần mềm*.
+  education:
+    title: Học vấn
+    icon: fas fa-graduation-cap
+    list:
+      - degree: Kỹ sư Công nghệ thông tin (đang theo học)
+        college: Đại học Công nghệ TP.HCM (HUTECH)
+        dates: 2022 - Nay
+        thesis_title: |1-
+          - Chuyên ngành: Công nghệ phần mềm  
+          - Dự kiến tốt nghiệp: 2026
+        thesis_url: ""
+  badge:
+    title: Chứng chỉ
+    icon: fas fa-certificate
+    format:
+      - date
+      - title
+      - authors
+      - journal
+    types:
+      - Certificates  # Loại cho chứng chỉ
+      - Journal Articles
+      - Proceedings
+    list:
+      - title: >-
+          Networking Basics
+        authors: "Trần Việt Hưng"
+        date: "2025-09-28"
+        journal: "Cisco Networking Academy"
+        url: (/pdfs/NetworkingBasicsUpdate20250928-34-igo7hs.pdf)  # Sửa thành /pdfs/
+        type: Certificates
+      - title: >-
+          JavaScript Essentials 1
+        authors: "Trần Việt Hưng"
+        date: "2025-09-28"
+        journal: "Cisco Networking Academy"
+        url: "/pdfs/JavaScriptEssentials1Update20250928-31-2a77t7.pdf"  # Sửa thành /pdfs/
+        type: Certificates
+      - title: >-
+          JavaScript Essentials 2
+        authors: "Trần Việt Hưng"
+        date: "2025-09-30"
+        journal: "Cisco Networking Academy"
+        url: "/pdfs/JavaScriptEssentials2Update20250930-30-tnd8rm.pdf"  # Sửa thành /pdfs/
+        type: Certificates
+  project:
+    title: Dự án
+    icon: fas fa-project-diagram
+    list:
+      - title: Website thuê xe tích hợp 3D, AI, ML
+        dates: 2024
+        description: |1-
+          - Phát triển bằng **ASP.NET MVC (.NET 8.0)** và **SQL Server 2022**.  
+          - Tích hợp **AR/VR** và **3D Viewer** giúp người dùng xem xe trực quan.  
+          - Quản lý thuê xe, thanh toán, tài khoản và chat hỗ trợ.
+        url: "#"
+      - title: Blog cá nhân "My Network Blog"
+        dates: 2025
+        description: |1-
+          - Xây dựng bằng **Hugo** và **TailwindCSS**, chia sẻ về **Lập trình mạng**.  
+          - Tích hợp trang **Home** (giới thiệu bản thân) và **Blog** (viết bài chia sẻ).
+        url: "#"
+      - title: Website Check-in sự kiện với QR động
+        dates: 2024
+        description: |1-
+          - Xây dựng hệ thống **quản lý sự kiện** sử dụng **QR Code động** check-in.  
+          - Cho phép khách tham dự quét mã QR điểm danh và xác thực tham gia.
+        url: "#"
+  skill:
+    title: Kỹ năng
+    icon: fas fa-cogs
+    panelId: skill-panel
+    list:
+      - skill: "Java, JavaScript"
+        skillrating: 75
+      - skill: "Lập trình mạng máy tính"
+        skillrating: 85
+      - skill: "HTML/CSS, TailwindCSS"
+        skillrating: 60
+      - skill: "Cơ sở dữ liệu & SQL"
+        skillrating: 95
+      - skill: "OOP (Lập trình hướng đối tượng)"
+        skillrating: 45
+      - skill: "Git / GitHub, VS Code"
+        skillrating: 90
+  hobby:
+    title: Sở thích
+    icon: fas fa-gamepad
+    list:
+      - hobby: Tìm hiểu công nghệ mới
+      - hobby: Viết blog chia sẻ kiến thức
+      - hobby: Lập trình web và ứng dụng
