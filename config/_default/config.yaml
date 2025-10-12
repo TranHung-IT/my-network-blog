@@ -40,7 +40,7 @@ params:
 
   profile:
     name: "Trần Việt Hưng"
-    tagline: Title
+    tagline: -- Code vs. Me --
     location: "Lâm Đồng - Việt Nam"
     photo: profile.jpg
   social:
