@@ -129,14 +129,14 @@ params:
       - title: >-
           Networking Basics
         authors: "Trần Việt Hưng"
-        date: "2025-09-28"
+        date: "2025-09-15"
         journal: "Cisco Networking Academy"
         url: pdfs/NetworkingBasicsUpdate20250928-34-igo7hs.pdf  # Sửa thành /pdfs/
         type: Certificates
       - title: >-
           JavaScript Essentials 1
         authors: "Trần Việt Hưng"
-        date: "2025-09-28"
+        date: "2025-09-21"
         journal: "Cisco Networking Academy"
         url: pdfs/JavaScriptEssentials1Update20250928-31-2a77t7.pdf  # Sửa thành /pdfs/
         type: Certificates
