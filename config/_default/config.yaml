@@ -158,17 +158,17 @@ params:
           - Tích hợp **AR/VR** và **3D Viewer** giúp người dùng xem xe trực quan.  
           - Quản lý thuê xe, thanh toán, tài khoản và chat hỗ trợ.
         url: "#"
-      - title: Blog cá nhân "My Network Blog"
-        dates: 2025
-        description: |1-
-          - Xây dựng bằng **Hugo** và **TailwindCSS**, chia sẻ về **Lập trình mạng**.  
-          - Tích hợp trang **Home** (giới thiệu bản thân) và **Blog** (viết bài chia sẻ).
-        url: "#"
       - title: Website Check-in sự kiện với QR động
         dates: 2024
         description: |1-
           - Xây dựng hệ thống **quản lý sự kiện** sử dụng **QR Code động** check-in.  
           - Cho phép khách tham dự quét mã QR điểm danh và xác thực tham gia.
+        url: "#"
+      - title: Blog cá nhân "My Network Blog"
+        dates: 2025
+        description: |1-
+          - Xây dựng bằng **Hugo** và **TailwindCSS**, chia sẻ về **Lập trình mạng**.  
+          - Tích hợp trang **Home** (giới thiệu bản thân) và **Blog** (viết bài chia sẻ).
         url: "#"
   skill:
     title: Kỹ năng
