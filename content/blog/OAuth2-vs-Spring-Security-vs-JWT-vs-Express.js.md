@@ -21,22 +21,25 @@ categories = [
 ]
 +++
 
-Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series về Java và JavaScript trên blog cá nhân. Sau bài về Serverless Architecture với AWS Lambda (bài 10), hôm nay mình sẽ đi sâu vào **Security Best Practices** – yếu tố quan trọng nhất để bảo vệ ứng dụng khỏi tấn công. Mình sẽ so sánh **OAuth2 với Spring Security** (Java) và **JWT với Express.js** (Node.js), từ setup authentication/authorization đến implement secure API users (login, token validation, role-based access).
+Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series về Java và JavaScript trên blog cá nhân. Sau bài về Serverless Architecture với AWS Lambda (bài 10), hôm nay mình sẽ đi sâu vào **Security Best Practices** – yếu tố quan trọng nhất để bảo vệ ứng dụng khỏi các mối đe dọa như data breach hay session hijacking. Mình sẽ so sánh **OAuth2 với Spring Security** (Java) và **JWT với Express.js** (Node.js), từ cơ chế authentication/authorization đến cách implement secure API users (login, token validation, role-based access).
 
-Nếu bạn là full-stack dev (Java backend + JS frontend), security là "must-know" để tránh data breach, session hijacking. Chúng ta sẽ build API login/register với token, validate role (admin/user) – code dễ copy-paste, bao gồm best practices như salt hashing, token expiration, và CORS!
+Nếu bạn là full-stack dev (Java backend + JS frontend), việc nắm vững security không chỉ giúp tránh lỗ hổng mà còn xây dựng hệ thống đáng tin cậy, tuân thủ các chuẩn như OWASP. Chúng ta sẽ khám phá cách hai cách tiếp cận này xử lý các khía cạnh cốt lõi như token lifecycle, error propagation, và integration với external providers, với ví dụ minh họa đơn giản – code dễ copy-paste!
 
-## Security Best Practices: Ôn nhanh OAuth2 vs JWT
+## OAuth2 vs JWT: Cơ chế hoạt động và sự khác biệt
 
-- **OAuth2 (Spring Security)**: Protocol authorization chuẩn, dùng access token từ provider (Google, Auth0) hoặc self-hosted. Spring Security auto-config filter chain, hỗ trợ JWT/OAuth2 resource server.
-- **JWT (Express.js)**: JSON Web Token, self-contained token (header.payload.signature) cho stateless auth. Express dùng middleware (jsonwebtoken, passport) để sign/verify token.
+OAuth2 là một framework authorization mở (RFC 6749), không phải authentication protocol, tập trung vào delegation access (grant types: authorization code, client credentials, implicit). Trong Spring Security, OAuth2 resource server validate token từ issuer (Introspection endpoint hoặc JWT decoder), hỗ trợ scopes/roles cho fine-grained access. Ưu điểm: Federated identity (delegate to Google/Auth0), secure delegation (refresh token rotation chống replay attacks), nhưng phức tạp với multiple flows và state management.
 
-OAuth2 mạnh về federated identity (social login), JWT lightweight cho microservices. Cả hai chống CSRF, XSS; best practices: HTTPS, short token expiry, refresh token, rate limiting.
+JWT (RFC 7519) là compact token self-contained (header.payload.signature), encode claims (user info, expiry, issuer) trong Base64, sign bằng HMAC/RS256 để verify integrity. Trong Express.js, middleware như jsonwebtoken sign/verify token, stateless (no server state), phù hợp microservices. Ưu điểm: Lightweight, no DB lookup, nhưng nhược điểm: Token size lớn (overhead), revocation khó (blacklist hoặc short expiry).
+
+Cả hai chống CSRF qua token binding, XSS qua input sanitization; OAuth2 mạnh về delegation (third-party access), JWT về statelessness (scale horizontal dễ).
 
 ## Ví dụ cơ bản: Secure User API
 
-Xây dựng API users với login/register, role-based access (admin tạo user, user xem profile). Dùng H2 in-memory (Java) và array in-memory (Node) cho đơn giản, BCrypt cho password hash.
+Xây dựng API users với login/register, role-based access (admin tạo user, user xem profile). Dùng H2 in-memory (Java) và array in-memory (Node) cho đơn giản, BCrypt cho password hash. Tập trung vào flow: AuthN (verify identity) → AuthZ (check permission).
 
 ### Java: Spring Security với OAuth2/JWT
+
+Spring Security dùng filter chain (SecurityFilterChain) để intercept requests, auto-config OAuth2 cho resource server. Token validation qua JwtDecoder, role mapping từ claims.
 
 #### pom.xml
 {{< highlight xml >}}
@@ -83,6 +86,8 @@ Xây dựng API users với login/register, role-based access (admin tạo user,
 {{< /highlight >}}
 
 #### User.java (Entity)
+Spring Security UserDetails interface cho authN, GrantedAuthority cho role mapping. Password hashed với BCrypt (salt automatic).
+
 {{< highlight java >}}
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -137,6 +142,8 @@ public class User implements UserDetails {
 {{< /highlight >}}
 
 #### SecurityConfig.java
+Filter chain intercept requests, session stateless cho API, OAuth2 resource server validate JWT từ issuer. Role-based access qua .hasRole().
+
 {{< highlight java >}}
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -179,6 +186,8 @@ public class SecurityConfig {
 {{< /highlight >}}
 
 #### AuthController.java
+AuthenticationManager verify credentials, JWT sign claims (subject, issuedAt, expiration) với HS512 algorithm, secure against tampering.
+
 {{< highlight java >}}
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -258,6 +267,8 @@ class LoginRequest {
 {{< /highlight >}}
 
 #### UserController.java (Secure)
+Authentication từ SecurityContextHolder, hasRole() check authority prefix "ROLE_".
+
 {{< highlight java >}}
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -287,9 +298,11 @@ public class UserController {
 }
 {{< /highlight >}}
 
-Chạy: `mvn spring-boot:run`. Test: Register POST /api/auth/register { "username": "alice", "password": "pass", "email": "alice@email.com" }, Login POST /api/auth/login { "username": "alice", "password": "pass" } (lấy token), GET /api/users (Bearer token), POST /api/users/admin (admin token).
+Chạy: `mvn spring-boot:run`. Test: Register POST /api/auth/register { "username": "alice", "password": "pass", "email": "alice@email.com" }, Login POST /api/auth/login { "username": "alice", "password": "pass" } (lấy token), GET /api/users Authorization: Bearer <token>, POST /api/users/admin Authorization: Bearer <admin_token> { "username": "bob", "password": "pass", "email": "bob@email.com" }.
 
 ### Node.js: Express.js với JWT
+
+Express middleware pattern cho flexible auth, jsonwebtoken sign/verify token stateless.
 
 #### package.json
 {{< highlight json >}}
@@ -307,6 +320,8 @@ Chạy: `mvn spring-boot:run`. Test: Register POST /api/auth/register { "usernam
 {{< /highlight >}}
 
 #### server.js
+Middleware authenticateToken verify signature, check expiry/claims. BCrypt hash salt automatic, chống rainbow table attacks.
+
 {{< highlight javascript >}}
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -374,11 +389,9 @@ Chạy: `npm install && node server.js`. Test: Register POST /api/auth/register 
 
 ## Best Practices: Salt Hashing, Token Expiry, và Rate Limiting
 
-- **Salt Hashing**: BCrypt tự động salt (Java: BCryptPasswordEncoder, Node.js: bcrypt.hash). Tránh plain text password.
-- **Token Expiry**: JWT/OAuth2 set expiry (24h access, 7d refresh). Refresh token rotation để chống replay.
-- **Rate Limiting**: Spring Security: @RateLimiter, Express: express-rate-limit.
+Salt hashing với BCrypt thêm random salt per password, chống rainbow table và dictionary attacks – BCrypt adaptive (cost factor tăng theo hardware). Token expiry (24h access, 7d refresh) giảm exposure nếu token leak, refresh rotation invalidate old token để chống replay. Rate limiting chống DDoS/brute-force, token bucket algorithm cho burst tolerance.
 
-#### Rate Limiting Express.js
+Ví dụ rate limiting Express.js:
 ```javascript
 const rateLimit = require('express-rate-limit');
 const limiter = rateLimit({
@@ -388,7 +401,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 ```
 
-#### Rate Limiting Spring Boot
+Spring Boot rate limiting:
 ```java
 @Bean
 public RateLimiterRegistry rateLimiterRegistry() {
@@ -396,16 +409,13 @@ public RateLimiterRegistry rateLimiterRegistry() {
 }
 ```
 
-**So sánh**: Spring Security built-in (OAuth2 rate limit), Express cần middleware external.
+Spring built-in, Express external middleware.
 
 ## Troubleshooting: Common Security Issues
 
-- **CSRF**: Spring auto-protect, Express dùng csurf middleware.
-- **XSS**: Spring escape HTML, Express sanitize input (express-validator).
-- **SQL Injection**: JPA parameterized queries, Express parameterized (mysql2).
-- **Token Leak**: Use HTTPS, short expiry, store refresh in HttpOnly cookie.
+CSRF (Cross-Site Request Forgery) khai thác session cookie, Spring auto-protect với CSRF token, Express cần csurf middleware generate/validate token. XSS (Cross-Site Scripting) inject script, Spring escape HTML in Thymeleaf, Express sanitize input với express-validator. SQL Injection parameterized queries tránh, JPA auto, Express dùng prepared statements (mysql2).
 
-#### Secure Cookie Express.js
+Token leak: HTTPS enforce, short expiry, HttpOnly/Secure cookies cho refresh token (không JS access). Ví dụ secure cookie Express.js:
 ```javascript
 res.cookie('refreshToken', token, {
     httpOnly: true,
@@ -415,7 +425,7 @@ res.cookie('refreshToken', token, {
 });
 ```
 
-#### Secure Header Spring
+Secure header Spring:
 ```java
 @Bean
 public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -427,7 +437,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-**So sánh**: Spring Security comprehensive (auto headers, CSRF), Express flexible nhưng manual config.
+Spring comprehensive (auto headers, CSRF), Express flexible manual config.
 
 ## Ưu nhược điểm tổng hợp
 

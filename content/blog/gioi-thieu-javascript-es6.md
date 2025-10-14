@@ -1,7 +1,7 @@
 +++
 author = "Trần Việt Hưng"
 title = "Giới thiệu JavaScript ES6: Arrow Functions và Destructuring – Những tính năng 'thần thánh' cho lập trình viên"
-date = "2025-10-09"
+date = "2025-09-10"
 description = "Bài viết chia sẻ cơ bản về hai tính năng nổi bật trong ES6: Arrow Functions và Destructuring. Giúp code JavaScript ngắn gọn và dễ đọc hơn!"
 tags = [
     "javascript",
@@ -17,16 +17,16 @@ categories = [
 
 Chào các bạn! Mình là Trần Việt Hưng, một lập trình viên đam mê Java và JavaScript. Trong series blog này, mình sẽ chia sẻ những kiến thức thực tế về lập trình, từ cơ bản đến nâng cao, để giúp các bạn – đặc biệt là những người mới bắt đầu – có thể áp dụng ngay vào dự án. Hôm nay, mình muốn nói về **JavaScript ES6** (ECMAScript 2015), một bản cập nhật lớn đã thay đổi cách chúng ta viết code JS. Cụ thể, mình sẽ tập trung vào hai "vũ khí bí mật": **Arrow Functions** và **Destructuring**. Chúng giúp code ngắn hơn, sạch hơn, và tránh được những lỗi phổ biến.
 
-Nếu bạn đang dùng Node.js, React, hay bất kỳ framework JS nào, ES6 là "must-know". Hãy cùng mình khám phá nhé!
+Nếu bạn đang dùng Node.js, React, hay bất kỳ framework JS nào, ES6 là "must-know". Hãy cùng mình khám phá cách chúng hoạt động bên dưới và lợi ích thực tế nhé!
 
 ## Arrow Functions: Hàm ngắn gọn, không lo 'this'
 
-Trước ES6, để viết một hàm đơn giản, chúng ta thường dùng `function()`. Nhưng vấn đề lớn là ngữ cảnh `this` – nó dễ bị thay đổi, dẫn đến bug khó debug. Arrow Functions giải quyết bằng cách **gắn `this` với ngữ cảnh cha**, và syntax siêu ngắn.
+Trước ES6, hàm được định nghĩa bằng `function()`, nhưng ngữ cảnh `this` là một trong những nguồn lỗi phổ biến nhất. `this` trong function thường trỏ đến object gọi hàm (hoặc undefined trong strict mode), dẫn đến binding phức tạp khi dùng callback hoặc event handler. Arrow Functions giải quyết bằng cách **lexical scoping** – `this` được bind với ngữ cảnh cha (enclosing scope), không tạo scope mới, và syntax ngắn gọn với `=>`.
 
-### Cú pháp cơ bản
-Arrow Function dùng dấu `=>` thay vì `function`. Ví dụ:
+Điều này làm Arrow Functions lý tưởng cho callbacks ngắn, như trong array methods hoặc promises, vì giữ nguyên `this` từ outer function. Tuy nhiên, chúng không có `arguments` object riêng, không dùng làm constructor (không `new`), và không hoisting (phải declare trước dùng). Implicit return cho phép hàm một dòng bỏ `{}` và `return`, làm code concise hơn 50% so với function truyền thống.
 
-{{< highlight javascript >}}
+Ví dụ cú pháp:
+```javascript
 // Trước ES6
 function greet(name) {
   return "Xin chào, " + name + "!";
@@ -42,12 +42,10 @@ const greetShort = (name) => "Xin chào, " + name + "!";
 
 // Không tham số
 const sayHi = () => "Chào bạn!";
-{{< /highlight >}}
+```
 
-### Ví dụ thực tế: Với array.map()
-Giả sử bạn có mảng số, muốn nhân đôi từng phần tử:
-
-{{< highlight javascript >}}
+Ví dụ thực tế với array.map():
+```javascript
 const numbers = [1, 2, 3, 4];
 
 // Trước
@@ -59,20 +57,20 @@ const doubled = numbers.map(function(num) {
 const doubled = numbers.map(num => num * 2);
 
 console.log(doubled); // [2, 4, 6, 8]
-{{< /highlight >}}
+```
 
-Lưu ý: Arrow Function không có `arguments` object riêng, và không dùng làm constructor (không `new`). Hoàn hảo cho callbacks trong event handlers hoặc promises!
+Bằng cách giữ lexical `this`, Arrow Functions tránh bug phổ biến trong OOP (như trong class methods hoặc event listeners), làm code predictable hơn, đặc biệt trong framework như React nơi `this` dễ mất.
 
 ## Destructuring: "Phá hủy" object/array để lấy giá trị nhanh
 
-Destructuring cho phép "giải nén" object hoặc array trực tiếp vào biến, thay vì viết code dài dòng. Rất hữu ích khi làm việc với API responses hoặc props trong React.
+Destructuring là tính năng ES6 cho phép trích xuất giá trị từ object/array vào biến riêng lẻ, dựa trên pattern matching – so sánh structure bên trái với bên phải. Với object, dùng key names (hoặc rename với :), với array dùng position. Hỗ trợ defaults (nếu undefined), rest operator (`...` cho phần còn lại), và nested destructuring.
 
-### Destructuring object
-Giả sử bạn có object user:
+Điều này giảm boilerplate code (thay vì `user.name`, `user.age` lặp lại), tăng readability, và dễ refactor khi API change. Trong functional programming, destructuring khuyến khích immutable data (không mutate origin), và kết hợp với spread (`...`) cho shallow copy/merge.
 
-{{< highlight javascript >}}
+Ví dụ object:
+```javascript
 const user = {
-  name: "Trần VIệt Hưng",
+  name: "Trần Việt Hưng",
   age: 28,
   city: "Hà Nội"
 };
@@ -88,12 +86,10 @@ console.log(name, age, city); // Trần Hưng 21 Lâm Đồng
 // Đổi tên biến
 const { name: userName, age: userAge } = user;
 console.log(userName); // Trần Hưng
-{{< /highlight >}}
+```
 
-### Destructuring array
-Với mảng:
-
-{{< highlight javascript >}}
+Ví dụ array:
+```javascript
 const colors = ["đỏ", "xanh", "vàng"];
 
 // Lấy phần tử đầu tiên và phần còn lại
@@ -106,12 +102,10 @@ function printColor([first, second]) {
   console.log(`Màu 1: ${first}, Màu 2: ${second}`);
 }
 printColor(colors); // Màu 1: đỏ, Màu 2: xanh
-{{< /highlight >}}
+```
 
-### Kết hợp với Arrow Function
-Siêu đỉnh khi dùng chung:
-
-{{< highlight javascript >}}
+Kết hợp với Arrow Function:
+```javascript
 const users = [
   { name: "Alice", score: 95 },
   { name: "Bob", score: 80 }
@@ -122,7 +116,9 @@ const highScorers = users
   .map(({ name }) => name);           // Lấy name trực tiếp
 
 console.log(highScorers); // ["Alice"]
-{{< /highlight >}}
+```
+
+Destructuring làm code declarative hơn, giảm nesting, và dễ integrate với ES6 modules (import {x} from 'module').
 
 ## Kết luận: Tại sao nên dùng ngay?
 

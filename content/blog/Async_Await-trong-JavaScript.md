@@ -17,126 +17,142 @@ categories = [
 
 Chào các bạn! Mình là Trần Việt Hưng đây, tiếp tục series chia sẻ về JavaScript hiện đại. Nếu bạn đã đọc bài trước về Arrow Functions và Destructuring, chắc hẳn bạn đang háo hức với những tính năng làm code "sạch" hơn. Hôm nay, mình sẽ đi sâu vào **Async/Await** – một "siêu anh hùng" từ ES8 (ECMAScript 2018), giúp xử lý bất đồng bộ (như API calls, file I/O) mà không rơi vào "callback hell" hay chuỗi Promises dài ngoằng. 
 
-So với Promises (ES6), Async/Await viết code gần như đồng bộ, dễ đọc và debug hơn nhiều. Nếu bạn đang làm full-stack với Java backend (dùng CompletableFuture tương tự), bạn sẽ thấy sự tương đồng thú vị. Cùng mình code thử nhé!
+So với Promises (ES6), Async/Await viết code gần như đồng bộ, dễ đọc và debug hơn nhiều. Nếu bạn đang làm full-stack với Java backend (dùng CompletableFuture tương tự), bạn sẽ thấy sự tương đồng thú vị. Cùng mình khám phá cách nó hoạt động và áp dụng nhé!
 
 ## Promises: Nền tảng, nhưng hơi "lủng lẳng"
 
-Trước khi vào Async/Await, ôn nhanh Promises: Chúng giải quyết vấn đề callback bằng cách trả về object với `.then()` (thành công) và `.catch()` (lỗi). Ví dụ fetch data từ API:
+Promises là một object đại diện cho kết quả cuối cùng của một hoạt động bất đồng bộ, được giới thiệu trong ES6 để giải quyết vấn đề callback lồng ghép sâu, dẫn đến code khó đọc và maintain. Một Promise có ba trạng thái: Pending (chưa hoàn thành), Fulfilled (thành công với value), và Rejected (thất bại với reason).
 
-{{< highlight javascript >}}
-// Promises cơ bản
-fetch('https://api.example.com/users')
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Lỗi:', error));
+Cú pháp cơ bản là:
+```javascript
+const promise = new Promise((resolve, reject) => {
+  // Async work
+  if (success) resolve(value);
+  else reject(error);
+});
 
-// Chain nhiều Promises (dễ rối nếu dài)
+promise.then(result => console.log(result))
+       .catch(error => console.error(error));
+```
+
+Tuy nhiên, khi chain nhiều Promises, code dễ trở thành "tháp" khó theo dõi:
+```javascript
 fetchUser()
   .then(user => fetchPosts(user.id))
-  .then(posts => displayPosts(posts))
+  .then(posts => fetchComments(posts[0].id))
+  .then(comments => display(comments))
   .catch(err => handleError(err));
-{{< /highlight >}}
+```
 
-Hay đấy, nhưng nếu chain 5-6 bước, code sẽ như "tháp spaghetti" – khó theo dõi và debug.
+Vấn đề là error propagation chỉ local (.catch() bắt lỗi chain trước), và parallel execution khó (phải dùng Promise.all()). Dù non-blocking nhờ event loop, syntax imperative làm code procedural, khó scale cho complex flow.
 
-## Async/Await: Viết async như sync!
+## Async/Await: Viết async như sync
 
-Async/Await là "sugar syntax" trên Promises, dùng từ khóa `async` cho function và `await` để chờ kết quả. Nó làm code tuyến tính, dễ đọc như sách giáo khoa.
+Async/Await là syntactic sugar trên Promises, biến async code thành dạng sync-like bằng cách dùng async function (trả Promise) và await (pause đến resolve/reject). Await chỉ dùng trong async, throw error nếu rejected, dễ bubble up qua try-catch.
 
-### Cú pháp cơ bản
-Bắt đầu với function async:
-
-{{< highlight javascript >}}
-// Function async đơn giản
+Cú pháp cơ bản:
+```javascript
 async function fetchData() {
   try {
     const response = await fetch('https://api.example.com/users');
     const data = await response.json();
-    console.log(data);
+    return data;
   } catch (error) {
-    console.error('Lỗi:', error);
+    throw new Error('Fetch failed: ' + error.message);
   }
 }
 
-fetchData(); // Gọi như function thường
-{{< /highlight >}}
+fetchData().then(data => console.log(data)).catch(err => console.error(err));
+```
 
-Lưu ý: `await` chỉ dùng trong `async` function. Try-catch tự động xử lý lỗi từ Promises!
+Dựa trên generator và microtask queue, await pause execution mà không block main thread, tạo stack trace tuyến tính dễ debug. So với Promises, code đọc như sync, giảm cognitive load.
 
-### Ví dụ thực tế: Chain async operations
-Giả sử bạn cần fetch user rồi fetch posts của họ:
-
-{{< highlight javascript >}}
-async function getUserPosts(userId) {
-  try {
-    // Await từng bước, code rõ ràng
-    const userResponse = await fetch(`https://api.example.com/users/${userId}`);
-    const user = await userResponse.json();
-    
-    const postsResponse = await fetch(`https://api.example.com/posts?userId=${userId}`);
-    const posts = await postsResponse.json();
-    
-    return { user, posts }; // Trả về object
-  } catch (error) {
-    console.error('Lỗi fetch:', error);
-    return null;
-  }
+### Chain async operations
+Giả sử fetch user rồi posts – await serialize, Promise.all parallel:
+```javascript
+// Serial (await từng cái)
+async function getUserPostsSerial(userId) {
+  const user = await fetchUser(userId);
+  const posts = await fetchPosts(user.id);
+  return { user, posts };
 }
 
-// Sử dụng
-getUserPosts(1).then(result => {
-  if (result) {
-    console.log('User:', result.user.name);
-    console.log('Posts:', result.posts.length);
-  }
-});
-{{< /highlight >}}
+// Parallel (Promise.all)
+async function getUserPostsParallel(userId) {
+  const [user, posts] = await Promise.all([
+    fetchUser(userId),
+    fetchPosts(userId) // Assume fetchPosts can use userId directly
+  ]);
+  return { user, posts };
+}
+```
 
-So với Promises, code này ngắn hơn và dễ theo dõi flow!
+Serial an toàn nếu phụ thuộc, parallel tối ưu time (O(1) vs O(n)), nhưng error nếu one fail thì all fail (dùng allSettled() cho partial).
 
-### Kết hợp với Arrow Functions (từ bài trước)
-Dùng Arrow + Destructuring để "pro" hơn:
-
-{{< highlight javascript >}}
+Kết hợp Arrow + Destructuring:
+```javascript
 const getUserPosts = async (userId) => {
   try {
-    const { user } = await getUser(userId);  // Giả sử có function getUser
-    const { posts } = await getPosts(user.id);
-    return { ...user, posts };  // Spread operator để merge
+    const { user } = await fetchUser(userId);
+    const { posts } = await fetchPosts(user.id);
+    return { ...user, posts };
   } catch (error) {
     throw new Error(`Không lấy được data: ${error.message}`);
   }
 };
-
-// Gọi với destructuring
-const { user: { name }, posts } = await getUserPosts(1);
-console.log(`${name} có ${posts.length} bài viết`);
-{{< /highlight >}}
+```
 
 ## Xử lý lỗi và edge cases
 
-- **Error handling**: Try-catch "bắt" hết lỗi từ await.
-- **Parallel awaits**: Dùng `Promise.all()` để chạy song song:
+Try-catch catch tất cả lỗi từ await, uniform với sync. Parallel error: Promise.all reject nếu any reject, Promise.allSettled() cho partial success.
 
-{{< highlight javascript >}}
-async function fetchMultiple() {
-  try {
-    const [users, posts] = await Promise.all([
-      fetch('https://api.example.com/users').then(res => res.json()),
-      fetch('https://api.example.com/posts').then(res => res.json())
-    ]);
-    console.log(users, posts);
-  } catch (error) {
-    console.error('Một trong các request lỗi:', error);
+Ví dụ timeout với AbortController:
+```javascript
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+try {
+  const response = await fetch(url, { signal: controller.signal });
+  clearTimeout(timeoutId);
+} catch (error) {
+  if (error.name === 'AbortError') {
+    console.log('Request timed out');
   }
 }
-{{< /highlight >}}
+```
 
-- **Timeout**: Kết hợp với AbortController để tránh request "treo".
+AbortController dùng ReadableStream, integrate với fetch, hỗ trợ cancel chain await, tránh memory leak.
 
-## Kết luận: Async/Await – Bước tiến lớn cho JS dev
+## So sánh với Java CompletableFuture
 
-Với Async/Await, bạn viết code bất đồng bộ như đang viết đồng bộ, giảm 50% thời gian debug so với Promises thuần. Nếu bạn dùng Java, hãy so sánh với `CompletableFuture.supplyAsync()` – ý tưởng tương tự! Hãy thử implement một API call nhỏ trong project của bạn ngay hôm nay.
+CompletableFuture (Java 8) tương đương Promise: supplyAsync() cho async, thenApply() như .then(), exceptionally() như .catch(). Async/Await simpler syntax, CompletableFuture functional (compose, join, allOf).
+
+Ví dụ tương đương:
+```java
+CompletableFuture<User> userFuture = CompletableFuture.supplyAsync(() -> fetchUser(userId));
+CompletableFuture<Posts> postsFuture = userFuture.thenApply(user -> fetchPosts(user.id));
+postsFuture.thenAccept(result -> display(result))
+           .exceptionally(ex -> { handleError(ex); return null; });
+```
+
+Cả hai dựa trên monad pattern (flatMap/thenCompose), nhưng Async/Await readable hơn cho JS dev, CompletableFuture powerful cho Java parallel streams.
+
+## Ưu nhược điểm tổng hợp
+
+| Tiêu chí          | Async/Await (ES8)             | Promises (ES6)                |
+|-------------------|-------------------------------|------------------------------|
+| **Readability**  | Cao (sync-like)              | Thấp (chain dài)             |
+| **Error Handling** | Try-catch uniform            | .catch() local               |
+| **Parallel**     | Promise.all + await          | Native Promise.all           |
+| **Debugging**    | Stack trace tuyến tính       | Chain trace khó theo dõi     |
+| **Performance**  | Tương đương (sugar)          | Tương đương                  |
+| **Learning Curve** | Dễ (nếu biết Promises)       | Cơ bản async                 |
+
+Async/Await là evolution của Promises, khuyến khích clean code.
+
+## Kết luận: Tại sao Async/Await "thần thánh"?
+
+Async/Await biến async thành sync mental model, giảm cognitive load. Trong full-stack, kết hợp với Java CompletableFuture cho hybrid apps. Hãy thử refactor Promise chain thành await – code sẽ "sạch" gấp bội!
 
 Bạn gặp khó khăn gì với async code? Comment bên dưới nhé. Bài sau: So sánh Java Streams vs. JS Array methods. Đừng quên subscribe để cập nhật!
 

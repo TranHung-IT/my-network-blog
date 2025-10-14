@@ -21,14 +21,14 @@ categories = [
 
 Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series Java & JavaScript trên blog. Sau bài về GraphQL vs REST, hôm nay chúng ta đi sâu vào **gRPC** và **WebSocket** – hai công nghệ mạnh mẽ cho ứng dụng real-time như chat, livestream, hay game online. Mình sẽ so sánh cách triển khai một chat app đơn giản dùng **Java** (gRPC với Spring Boot, WebSocket với Java) và **Node.js** (gRPC với grpc-js, WebSocket với ws).
 
-Nếu bạn là full-stack dev, hiểu gRPC và WebSocket sẽ giúp bạn xây dựng hệ thống hiệu suất cao, đặc biệt khi kết hợp Java backend và JS frontend. Hãy cùng code một chat server gửi/nhận tin nhắn nhé – code dễ copy-paste!
+Nếu bạn là full-stack dev, hiểu gRPC và WebSocket sẽ giúp bạn xây dựng hệ thống hiệu suất cao, đặc biệt khi kết hợp Java backend và JS frontend. Hãy cùng khám phá cách chúng hoạt động bên dưới, với ví dụ minh họa đơn giản nhé!
 
 ## gRPC vs WebSocket: Ôn nhanh
 
-- **gRPC**: Framework RPC dựa trên HTTP/2, dùng Protocol Buffers (Protobuf) để định nghĩa API. Hiệu suất cao, type-safe, hỗ trợ bidirectional streaming, lý tưởng cho microservices hoặc real-time data.
-- **WebSocket**: Giao thức full-duplex qua TCP, cho phép client-server giao tiếp liên tục (không cần polling). Phù hợp cho chat, notifications, hoặc game.
+- **gRPC**: Framework RPC dựa trên HTTP/2, dùng Protocol Buffers (Protobuf) để định nghĩa API. Hiệu suất cao nhờ binary serialization (nhỏ gọn hơn JSON), type-safe (schema contract), hỗ trợ bidirectional streaming (client-server hai chiều đồng thời), lý tưởng cho microservices hoặc real-time data nơi latency thấp là ưu tiên.
+- **WebSocket**: Giao thức full-duplex qua TCP, bắt đầu bằng HTTP handshake (Upgrade header), sau đó duy trì connection persistent cho message framing (text/binary frames). Phù hợp cho chat, notifications, hoặc game, vì giảm overhead polling (không cần request lặp lại).
 
-gRPC mạnh về performance và scalability, WebSocket đơn giản hơn cho real-time web apps.
+gRPC mạnh về performance và scalability nhờ HTTP/2 multiplexing (multiple streams on one connection), WebSocket đơn giản hơn cho real-time web apps nhờ native browser support. Cả hai đều non-blocking, nhưng gRPC schema-driven (compile-time check), WebSocket schema-less (runtime parsing).
 
 ## Ví dụ cơ bản: Chat App
 
@@ -37,59 +37,15 @@ Xây dựng chat server nhận tin nhắn từ client và broadcast đến tất
 ### gRPC: Java + Node.js
 
 #### Java: gRPC với Spring Boot
-Cần dependency `io.grpc:grpc-spring-boot-starter` và Protobuf plugin.
-
-##### pom.xml
-{{< highlight xml >}}
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>io.grpc</groupId>
-        <artifactId>grpc-spring-boot-starter</artifactId>
-        <version>2.14.0</version>
-    </dependency>
-</dependencies>
-<build>
-    <extensions>
-        <extension>
-            <groupId>kr.motd.maven</groupId>
-            <artifactId>os-maven-plugin</artifactId>
-            <version>1.7.0</version>
-        </extension>
-    </extensions>
-    <plugins>
-        <plugin>
-            <groupId>org.xolstice.maven.plugins</groupId>
-            <artifactId>protobuf-maven-plugin</artifactId>
-            <version>0.6.1</version>
-            <configuration>
-                <protocArtifact>com.google.protobuf:protoc:3.19.4:exe:${os.detected.classifier}</protocArtifact>
-                <pluginId>grpc-java</pluginId>
-                <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.43.2:exe:${os.detected.classifier}</pluginArtifact>
-            </configuration>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>compile</goal>
-                        <goal>compile-custom</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
-{{< /highlight >}}
+Cần dependency `io.grpc:grpc-spring-boot-starter` và Protobuf plugin. gRPC hoạt động bằng cách define service trong .proto file, compile thành stub client/server, hỗ trợ 4 call types (unary, server-streaming, client-streaming, bidirectional).
 
 ##### chat.proto (tại `src/main/proto/`)
 {{< highlight proto >}}
 syntax = "proto3";
 option java_package = "com.example.chat";
 service ChatService {
-    rpc SendMessage (ChatMessage) returns (ChatResponse);
-    rpc ChatStream (stream ChatMessage) returns (stream ChatResponse);
+    rpc SendMessage (ChatMessage) returns (ChatResponse); // Unary
+    rpc ChatStream (stream ChatMessage) returns (stream ChatResponse); // Bidirectional
 }
 message ChatMessage {
     string user = 1;
@@ -102,6 +58,8 @@ message ChatResponse {
 {{< /highlight >}}
 
 ##### ChatServiceImpl.java
+gRPC server extend ImplBase, implement rpc methods với StreamObserver cho streaming. Bidirectional stream cho phép client send/receive liên tục, tương tự WebSocket nhưng với Protobuf serialization.
+
 {{< highlight java >}}
 import io.grpc.stub.StreamObserver;
 import org.lognet.springboot.grpc.GRpcService;
@@ -149,10 +107,10 @@ public class ChatServiceImpl extends ChatServiceGrpc.ChatServiceImplBase {
 }
 {{< /highlight >}}
 
-Chạy: `mvn spring-boot:run`. Test với gRPC client (e.g., BloomRPC), gửi `{ user: "Alice", message: "Hi" }` qua `ChatStream`.
+Chạy: `mvn spring-boot:run`. Test với gRPC client (e.g., BloomRPC), gửi `{ user: "Alice", message: "Hi" }` qua `ChatStream`. gRPC bidirectional stream cho phép real-time chat mà không cần polling, với HTTP/2 head-of-line blocking avoidance.
 
 #### Node.js: gRPC với grpc-js
-Cài `npm i @grpc/grpc-js @grpc/proto-loader`.
+gRPC-js là binding Node cho gRPC, load .proto dynamically, hỗ trợ streaming tương tự Java. Server addService, client call unary/bidirectional.
 
 ##### package.json
 {{< highlight json >}}
@@ -168,6 +126,8 @@ Cài `npm i @grpc/grpc-js @grpc/proto-loader`.
 {{< /highlight >}}
 
 ##### server.js (gRPC)
+gRPC server bind port, addService với impl functions. ChatStream dùng call.on('data') để handle stream, forEach clients để broadcast, tương tự pub-sub pattern.
+
 {{< highlight javascript >}}
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
@@ -201,12 +161,12 @@ server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () =>
 });
 {{< /highlight >}}
 
-Chạy: `npm install && node server.js`. Test với gRPC client, gửi `{ user: "Alice", message: "Hi" }`.
+Chạy: `npm install && node server.js`. Test với gRPC client, gửi `{ user: "Alice", message: "Hi" }`. gRPC streaming non-blocking, scale tốt với HTTP/2, nhưng cần .proto schema – compile-time contract.
 
 ### WebSocket: Java + Node.js
 
 #### Java: WebSocket với Spring Boot
-Dùng `spring-boot-starter-websocket`.
+WebSocket (RFC 6455) bắt đầu bằng HTTP upgrade handshake, sau đó frame messages (opcode: text/binary/close). Spring WebSocket dùng STOMP over WebSocket cho pub-sub, nhưng raw WebSocket cho simple chat.
 
 ##### pom.xml
 {{< highlight xml >}}
@@ -219,6 +179,8 @@ Dùng `spring-boot-starter-websocket`.
 {{< /highlight >}}
 
 ##### WebSocketConfig.java
+Spring config registry handlers, enable SockJS fallback cho old browser.
+
 {{< highlight java >}}
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -236,6 +198,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
 {{< /highlight >}}
 
 ##### ChatWebSocketHandler.java
+Handler extend TextWebSocketHandler, afterConnectionEstablished add session to list, handleTextMessage broadcast, afterConnectionClosed remove.
+
 {{< highlight java >}}
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -269,10 +233,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 }
 {{< /highlight >}}
 
-Chạy: `mvn spring-boot:run`. Test với WebSocket client (e.g., wscat: `wscat -c ws://localhost:8080/chat`).
+Chạy: `mvn spring-boot:run`. Test với WebSocket client (e.g., wscat: `wscat -c ws://localhost:8080/chat`). WebSocket persistent connection giảm latency so HTTP polling, nhưng cần handle close codes (1000 normal, 1001 going away).
 
 #### Node.js: WebSocket với ws
-Cài `npm i ws`.
+ws library implement RFC 6455, server on('connection') handle upgrade, on('message') frame parse.
 
 ##### package.json
 {{< highlight json >}}
@@ -287,6 +251,8 @@ Cài `npm i ws`.
 {{< /highlight >}}
 
 ##### server.js (WebSocket)
+ws Server listen port, on('connection') add client, on('message') broadcast to all readyState OPEN clients.
+
 {{< highlight javascript >}}
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
@@ -311,9 +277,9 @@ wss.on('connection', (ws) => {
 console.log('WebSocket Server running on port 8080');
 {{< /highlight >}}
 
-Chạy: `npm install && node server.js`. Test với `wscat -c ws://localhost:8080`.
+Chạy: `npm install && node server.js`. Test với `wscat -c ws://localhost:8080`. WebSocket frame-based (opcode, mask for client), support binary (images), nhưng no built-in auth (cần JWT in URL/query).
 
-**So sánh**: gRPC nhanh, type-safe, cần Protobuf; WebSocket đơn giản, dễ tích hợp với browser.
+**So sánh**: gRPC binary-efficient, schema-enforced; WebSocket text-friendly, browser-native.
 
 ## Ưu nhược điểm tổng hợp
 

@@ -21,199 +21,87 @@ categories = [
 
 Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series Java & JavaScript trên blog. Sau bài về gRPC vs WebSocket, hôm nay chúng ta khám phá **CI/CD** – chìa khóa để tự động hóa quy trình phát triển và triển khai phần mềm. Mình sẽ so sánh **Jenkins** (công cụ CI/CD truyền thống) và **GitHub Actions** (giải pháp hiện đại tích hợp GitHub), đồng thời hướng dẫn xây dựng pipeline triển khai ứng dụng **Spring Boot** (Java) và **Express.js** (Node.js).
 
-Nếu bạn là full-stack dev, CI/CD giúp tiết kiệm thời gian, giảm lỗi khi deploy, và đẩy nhanh release. Hãy cùng build pipeline đơn giản để build, test, và deploy nhé – code dễ copy-paste!
+Nếu bạn là full-stack dev, CI/CD giúp tiết kiệm thời gian, giảm lỗi khi deploy, và đẩy nhanh release. Hãy cùng khám phá cách nó hoạt động bên dưới, với ví dụ minh họa nhé!
 
-## Jenkins vs GitHub Actions: Ôn nhanh
+## CI/CD: Nền tảng và tầm quan trọng
 
-- **Jenkins**: Công cụ CI/CD mã nguồn mở, linh hoạt, chạy trên server riêng (on-premise hoặc cloud). Hỗ trợ pipeline bằng file `Jenkinsfile`, plugin phong phú, nhưng cần setup server.
-- **GitHub Actions**: Dịch vụ CI/CD tích hợp sẵn trong GitHub, dùng YAML workflows, dễ setup, phù hợp cho dự án open-source hoặc team nhỏ. Tích hợp chặt chẽ với GitHub repo.
+CI/CD (Continuous Integration/Continuous Delivery/Deployment) là thực hành DevOps để tự động hóa build, test, và deploy code. **CI** (Continuous Integration): Merge code thường xuyên, build/test tự động để phát hiện lỗi sớm. **CD** (Continuous Delivery): Tự động deploy đến staging, ready for production; **Continuous Deployment**: Auto deploy to production nếu test pass.
 
-Jenkins mạnh cho enterprise phức tạp, GitHub Actions tiện lợi cho dự án hiện đại, cloud-native.
+CI/CD dựa trên version control (Git), containerization (Docker), và orchestration (K8s), giảm manual work, tăng velocity (deploy hàng ngày thay tuần). Vấn đề với manual: Human error, slow feedback loop, bottleneck. CI/CD giải quyết bằng pipeline (DAG - Directed Acyclic Graph), stages sequential/parallel.
 
-## Ví dụ cơ bản: CI/CD Pipeline cho ứng dụng
+Ví dụ flow: Commit → Trigger build → Run tests → Scan security → Deploy staging → Manual approval → Deploy production.
 
-Xây dựng pipeline để build, test, và deploy ứng dụng Spring Boot (REST API) và Express.js (REST API). Giả sử repo có cấu trúc:
+## Jenkins: Architecture và Pipeline
 
-{{< highlight plaintext >}}
-project/
-├── java-app/  # Spring Boot
-│   ├── src/
-│   ├── pom.xml
-│   └── Dockerfile
-├── node-app/  # Express.js
-│   ├── src/
-│   ├── package.json
-│   └── Dockerfile
-├── Jenkinsfile
-└── README.md
-{{< /highlight >}}
+Jenkins là CI/CD server mã nguồn mở (2004, Hudson fork), chạy on-premise/cloud, hỗ trợ 1,800+ plugins. Architecture: Master-slave (master orchestrate, slave run jobs), Groovy DSL cho scripted pipeline, Declarative syntax cho readable.
 
-### Jenkins: Pipeline với Jenkinsfile
+### Pipeline Model
+- **Scripted Pipeline**: Groovy script, flexible nhưng verbose.
+- **Declarative Pipeline**: DSL structured (stages, steps, agents), easier maintain.
 
-Cài đặt Jenkins:
-- Chạy: `docker run -p 8080:8080 jenkins/jenkins:lts`.
-- Cần plugin: Maven, NodeJS, Docker, Git.
-- Cấu hình JDK, Maven, NodeJS trong *Manage Jenkins > Global Tool Configuration*.
+Jenkins dùng Job (Freestyle, Pipeline), Trigger (webhook, poll SCM), Artifacts (build output), Plugins (Maven, Docker). Scale bằng distributed builds (agent labels).
 
-#### Jenkinsfile
-{{< highlight groovy >}}
+Ví dụ Declarative Pipeline cơ bản:
+```groovy
 pipeline {
     agent any
-    tools {
-        jdk 'JDK17'
-        maven 'Maven3'
-        nodejs 'Node18'
-    }
     stages {
-        stage('Checkout') {
+        stage('Build') {
             steps {
-                git 'https://github.com/TranHung-IT/project.git'
+                sh 'mvn clean package'
             }
         }
-        stage('Build Java') {
+        stage('Test') {
             steps {
-                dir('java-app') {
-                    sh 'mvn clean package'
-                }
+                sh 'mvn test'
             }
-        }
-        stage('Test Java') {
-            steps {
-                dir('java-app') {
-                    sh 'mvn test'
-                }
-            }
-        }
-        stage('Build Node.js') {
-            steps {
-                dir('node-app') {
-                    sh 'npm install'
-                }
-            }
-        }
-        stage('Test Node.js') {
-            steps {
-                dir('node-app') {
-                    sh 'npm test'
-                }
-            }
-        }
-        stage('Deploy') {
-            steps {
-                dir('java-app') {
-                    sh 'docker build -t java-app:latest .'
-                    sh 'docker run -d -p 8080:8080 java-app:latest'
-                }
-                dir('node-app') {
-                    sh 'docker build -t node-app:latest .'
-                    sh 'docker run -d -p 3000:3000 node-app:latest'
-                }
-            }
-        }
-    }
-    post {
-        always {
-            cleanWs()
         }
     }
 }
-{{< /highlight >}}
+```
 
-#### Dockerfile (Java)
-{{< highlight dockerfile >}}
-FROM openjdk:17-jdk-slim
-WORKDIR /app
-COPY target/java-app.jar .
-EXPOSE 8080
-CMD ["java", "-jar", "java-app.jar"]
-{{< /highlight >}}
+Ưu: Customizable, plugin ecosystem; Nhược: Setup heavy, security risks nếu plugin vulnerable.
 
-#### Dockerfile (Node.js)
-{{< highlight dockerfile >}}
-FROM node:18
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
-{{< /highlight >}}
+## GitHub Actions: Workflows và Events
 
-Chạy: Đặt `Jenkinsfile` và `Dockerfile` vào root repo, push lên GitHub. Trong Jenkins, tạo pipeline, chọn SCM (Git), và chạy build. Kiểm tra container chạy tại `localhost:8080` (Java) và `localhost:3000` (Node).
+GitHub Actions (2019) là SaaS CI/CD, tích hợp GitHub, dùng YAML workflows (.github/workflows/*.yml). Architecture: Virtual machines (runners: Ubuntu, Windows, macOS), Events trigger (push, pull_request), Jobs parallel, Steps sequential.
 
-### GitHub Actions: Workflow YAML
+### Workflow Model
+- **Events**: Trigger (push to main, PR open).
+- **Jobs**: Parallel units (matrix strategy cho multi-env).
+- **Steps**: Commands (run, uses actions/checkout).
+- **Artifacts**: Upload/download build output.
 
-Cấu hình GitHub:
-- Tạo repo trên GitHub, push code.
-- Thêm secret `GITHUB_TOKEN` trong *Settings > Secrets and variables > Actions*.
-- Đặt `Dockerfile` như trên vào `java-app/` và `node-app/`.
+Actions marketplace (re-usable actions), Secrets (env vars secure), Caching (speed up npm/mvn). Scale tự động, pay-per-minute (2,000 free minutes/month).
 
-#### .github/workflows/ci-cd.yml
-{{< highlight yaml >}}
-name: CI/CD Pipeline
-on:
-  push:
-    branches: [ main ]
+Ví dụ YAML workflow cơ bản:
+```yaml
+name: CI Pipeline
+on: [push]
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - run: npm install
+      - run: npm test
+```
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+Ưu: Zero-setup, GitHub integration; Nhược: Vendor lock-in, minute limits.
 
-      - name: Build Java
-        run: |
-          cd java-app
-          mvn clean package
+## So sánh: Pipeline Execution và Scaling
 
-      - name: Test Java
-        run: |
-          cd java-app
-          mvn test
+- **Execution**: Jenkins sequential/parallel stages, GitHub Actions jobs parallel (matrix for cross-platform).
+- **Scaling**: Jenkins agents (Kubernetes plugin), GitHub self-hosted runners.
+- **Security**: Jenkins RBAC, GitHub OIDC for AWS.
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Build Node.js
-        run: |
-          cd node-app
-          npm install
-
-      - name: Test Node.js
-        run: |
-          cd node-app
-          npm test
-
-      - name: Build and Push Docker (Java)
-        run: |
-          cd java-app
-          docker build -t ghcr.io/tranhung-it/java-app:latest .
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin     
-          docker push ghcr.io/tranhung-it/java-app:latest
-
-      - name: Build and Push Docker (Node.js)
-        run: |
-          cd node-app
-          docker build -t ghcr.io/tranhung-it/node-app:latest .
-          docker push ghcr.io/tranhung-it/node-app:latest
-
-      - name: Deploy
-        run: |
-          docker run -d -p 8080:8080 ghcr.io/tranhung-it/java-app:latest
-          docker run -d -p 3000:3000 ghcr.io/tranhung-it/node-app:latest
-{{< /highlight >}}
-
-Chạy: Push code lên `main` branch, xem pipeline trong *Actions* tab. Container chạy tại `localhost:8080` (Java) và `localhost:3000` (Node).
-
-**So sánh**: Jenkins linh hoạt, cần server; GitHub Actions tích hợp GitHub, setup nhanh.
+Ví dụ multi-env GitHub:
+```yaml
+strategy:
+  matrix:
+    os: [ubuntu, windows]
+    node: [16, 18]
+```
 
 ## Ưu nhược điểm tổng hợp
 

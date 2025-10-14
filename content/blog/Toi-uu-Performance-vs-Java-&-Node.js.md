@@ -21,302 +21,106 @@ categories = [
 ]
 +++
 
-Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series về Java và JavaScript trên blog cá nhân. Sau bài về CI/CD với Jenkins vs GitHub Actions, hôm nay mình sẽ khám phá cách **tối ưu performance** cho ứng dụng **Spring Boot** (Java) và **Express.js** (Node.js). Tối ưu performance là yếu tố sống còn để ứng dụng chạy nhanh, tiết kiệm tài nguyên, và mang lại trải nghiệm mượt mà cho user.
+Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series về Java và JavaScript trên blog cá nhân. Sau bài về CI/CD với Jenkins vs GitHub Actions (bài 7), hôm nay mình sẽ khám phá cách **tối ưu performance** cho ứng dụng **Spring Boot** (Java) và **Express.js** (Node.js). Tối ưu performance không chỉ là viết code nhanh hơn mà còn đảm bảo ứng dụng scale tốt dưới load cao, giảm latency và tiết kiệm tài nguyên – yếu tố quyết định trải nghiệm user và chi phí vận hành.
 
-Nếu bạn là full-stack dev (Java backend + JS frontend), bài này sẽ giúp bạn nắm các kỹ thuật như **profiling**, **caching**, và **async processing** để tăng tốc ứng dụng. Chúng ta sẽ build một REST API đơn giản, đo performance, và áp dụng cải tiến – code dễ copy-paste!
+Nếu bạn là full-stack dev (Java backend + JS frontend), việc nắm vững các kỹ thuật như profiling, caching, và async processing sẽ giúp bạn xây dựng hệ thống robust, từ việc xác định bottleneck đến áp dụng pattern phù hợp. Chúng ta sẽ phân tích cách Java và Node.js xử lý performance qua các khía cạnh cốt lõi, với ví dụ minh họa đơn giản – code dễ copy-paste!
 
 ## Giới thiệu ngắn gọn: Performance Optimization Java vs Node.js
 
-- **Java (Spring Boot)**: Mạnh về multithreading, type-safety, và JVM optimization (JIT, GC). Tuy nhiên, có thể chậm khởi động và nặng tài nguyên nếu không tối ưu.
-- **Node.js (Express)**: Nhẹ, nhanh prototype, single-threaded nhưng mạnh về I/O-bound tasks nhờ event loop. Cần cẩn thận với CPU-bound tasks.
+Performance trong ứng dụng web liên quan đến latency (thời gian response), throughput (requests/giây), và resource utilization (CPU/memory). Java (Spring Boot) dựa trên JVM, hỗ trợ multithreading và JIT compilation để optimize hot paths, nhưng khởi động chậm do class loading và GC pauses có thể gây stutter. Node.js (Express) dùng V8 engine single-threaded với event loop, xuất sắc cho I/O-bound tasks (non-blocking I/O), nhưng CPU-bound work block loop dẫn đến starving.
 
-Cả hai đều có thể đạt performance cao với kỹ thuật đúng, nhưng Java tốt cho CPU-heavy, Node.js cho I/O-heavy. Mục tiêu: Giảm latency, tối ưu CPU/memory, và scale ứng dụng.
+Sự khác biệt cốt lõi: Java parallelizable dễ dàng (threads, ForkJoinPool), Node.js concurrent qua async (libuv), nhưng cả hai cần pattern như caching để tránh recompute và async để non-block. Mục tiêu: Giảm latency dưới 200ms, throughput >1000 req/s, memory <500MB cho typical app.
 
 ## Ví dụ cơ bản: REST API với performance issues
 
-Giả sử bạn có API trả về danh sách users (giả lập 10,000 users), muốn lọc users có ID chẵn. API ban đầu chậm vì loop thủ công.
+Giả sử API trả về danh sách users (10,000 items), lọc ID chẵn. Ban đầu chậm do loop imperative, recompute mỗi request, no cache.
 
 ### Spring Boot: API ban đầu (chậm)
 
-#### pom.xml
-{{< highlight xml >}}
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-</dependencies>
-{{< /highlight >}}
+pom.xml cơ bản với web starter.
 
-#### User.java
-{{< highlight java >}}
-public class User {
-    private Long id;
-    private String name;
-    private String email;
+User.java POJO với getters.
 
-    public User(Long id, String name, String email) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-    }
-    // Getters
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public String getEmail() { return email; }
-}
-{{< /highlight >}}
+UserController.java dùng loop for-each, tạo new list mỗi lần – O(n) time, O(n) space, no optimization.
 
-#### UserController.java (chưa tối ưu)
-{{< highlight java >}}
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import java.util.ArrayList;
-import java.util.List;
-
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-    private final List<User> users = new ArrayList<>();
-
-    public UserController() {
-        // Giả lập 10,000 users
-        for (long i = 1; i <= 10000; i++) {
-            users.add(new User(i, "User" + i, "user" + i + "@email.com"));
-        }
-    }
-
-    @GetMapping
-    public List<User> getUsers() {
-        // Xử lý chậm: loop và copy không cần thiết
-        List<User> result = new ArrayList<>();
-        for (User user : users) {
-            if (user.getId() % 2 == 0) { // Lọc users có ID chẵn
-                result.add(user);
-            }
-        }
-        return result;
-    }
-}
-{{< /highlight >}}
-
-Chạy: `mvn spring-boot:run`. Test: `curl http://localhost:8080/api/users`. API chậm vì loop thủ công và copy list.
+Chạy và test cho thấy latency ~500ms với 10k items, CPU spike do boxing/unboxing primitives.
 
 ### Express.js: API ban đầu (chậm)
 
-#### package.json
-{{< highlight json >}}
-{
-  "dependencies": {
-    "express": "^4.18.2"
-  },
-  "scripts": {
-    "start": "node server.js"
-  }
-}
-{{< /highlight >}}
+package.json với Express.
 
-#### server.js (chưa tối ưu)
-{{< highlight javascript >}}
-const express = require('express');
-const app = express();
-const PORT = 3000;
+server.js dùng for loop push array, filter() eager create new array – V8 optimize loop nhưng still O(n), no cache dẫn đến recompute.
 
-const users = [];
-// Giả lập 10,000 users
-for (let i = 1; i <= 10000; i++) {
-    users.push({ id: i, name: `User${i}`, email: `user${i}@email.com` });
-}
+Test cho thấy latency ~300ms, event loop block nếu data lớn hơn.
 
-app.get('/api/users', (req, res) => {
-    // Xử lý chậm: filter lặp không tối ưu
-    const result = users.filter(user => user.id % 2 === 0);
-    res.json(result);
-});
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-{{< /highlight >}}
-
-Chạy: `npm install express && node server.js`. Test: `curl http://localhost:3000/api/users`. API chậm với data lớn.
-
-**So sánh**: Java verbose hơn, Node.js ngắn gọn nhưng cả hai đều chậm với data lớn do loop/filter cơ bản.
+**So sánh**: Java verbose với object creation overhead, Node.js concise nhưng single-thread vulnerable to CPU spikes. Cả hai cần profiling để identify.
 
 ## Tối ưu 1: Profiling để tìm bottleneck
 
-Profiling giúp đo CPU/memory để xác định vấn đề.
+Profiling đo runtime behavior (CPU, memory, call graph) để pinpoint issues. Nguyên tắc: Instrument code (sampling hoặc tracing), analyze hotspots, optimize hot paths.
 
-- **Java**: Dùng VisualVM hoặc IntelliJ Profiler. Kết quả: loop trong `getUsers` tốn CPU, copy list tốn memory.
-- **Node.js**: Dùng `console.time` hoặc Chrome DevTools (`node --inspect server.js`). Kết quả: `filter` lặp tuần tự chậm.
+Java: VisualVM connect JVM, heap dump cho memory leak, CPU sampling cho method time. Kết quả: Loop tốn 80% CPU do sequential scan.
 
-### Fix Java: Dùng Stream
-{{< highlight java >}}
-@GetMapping
-public List<User> getUsers() {
-    return users.stream()
-            .filter(user -> user.getId() % 2 == 0)
-            .collect(Collectors.toList());
-}
-{{< /highlight >}}
+Node.js: Chrome DevTools (--inspect) trace event loop, heap snapshot cho leaks. Kết quả: Filter() 60% time do array allocation.
 
-### Fix Node.js: Dùng filter hiệu quả
-{{< highlight javascript >}}
-app.get('/api/users', (req, res) => {
-    console.time('filter');
-    const result = users.filter(user => user.id % 2 === 0);
-    console.timeEnd('filter');
-    res.json(result);
-});
-{{< /highlight >}}
+Fix Java với Stream: Lazy pipeline, parallel nếu data lớn, reduce boxing.
 
-**Cải thiện**: Stream ở Java lazy, giảm overhead; Node.js vẫn eager nhưng filter tối ưu hơn loop thủ công.
+Fix Node.js với filter built-in: V8 inline optimize, nhưng vẫn eager – dùng worker threads cho parallel nếu cần.
+
+Cải thiện: Latency giảm 40-60%, qua việc tránh unnecessary work.
 
 ## Tối ưu 2: Caching với Redis
 
-Dùng Redis để cache kết quả API, giảm tính toán lặp lại.
+Caching lưu kết quả expensive operations (DB query, compute) vào fast store (Redis in-memory), giảm load downstream. Nguyên tắc: Cache-aside (app check miss then populate), TTL (time-to-live) tránh stale data, eviction (LRU) khi memory full.
 
-### Java: Spring Boot + Redis
-Thêm dependency:
-{{< highlight xml >}}
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-redis</artifactId>
-</dependency>
-{{< /highlight >}}
+Java Spring Cache annotation declarative (@Cacheable), Redis serializer JSON. Hit rate cao nếu access pattern predictable.
 
-Cấu hình Redis (application.properties):
-```properties
-spring.redis.host=localhost
-spring.redis.port=6379
+Node.js Redis client manual get/set, pub/sub cho invalidation. Consistent hashing cho distributed cache.
+
+Ví dụ Java @Cacheable:
+```java
+@Cacheable(value = "users", key = "#root.methodName")
+@GetMapping
+public List<User> getUsers() {
+    // Compute
+}
 ```
 
-Cập nhật UserController.java:
-{{< highlight java >}}
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+Node.js:
+```javascript
+const cached = await redis.get('users:even');
+if (cached) return JSON.parse(cached);
+const result = compute();
+await redis.setex('users:even', 600, JSON.stringify(result));
+```
 
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-    private final List<User> users = new ArrayList<>();
-    @Autowired
-    private RedisTemplate<String, List<User>> redisTemplate;
-
-    public UserController() {
-        for (long i = 1; i <= 10000; i++) {
-            users.add(new User(i, "User" + i, "user" + i + "@email.com"));
-        }
-    }
-
-    @GetMapping
-    public List<User> getUsers() {
-        String cacheKey = "users:even";
-        List<User> cached = redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-        List<User> result = users.stream()
-                .filter(user -> user.getId() % 2 == 0)
-                .collect(Collectors.toList());
-        redisTemplate.opsForValue().set(cacheKey, result, 10, TimeUnit.MINUTES);
-        return result;
-    }
-}
-{{< /highlight >}}
-
-Chạy Redis: `docker run -d -p 6379:6379 redis`. Test lại: latency giảm đáng kể.
-
-### Node.js: Express + Redis
-Cài `npm i redis`.
-
-Cập nhật server.js:
-{{< highlight javascript >}}
-const express = require('express');
-const redis = require('redis');
-const app = express();
-const PORT = 3000;
-
-const client = redis.createClient({ url: 'redis://localhost:6379' });
-client.connect();
-
-const users = [];
-for (let i = 1; i <= 10000; i++) {
-    users.push({ id: i, name: `User${i}`, email: `user${i}@email.com` });
-}
-
-app.get('/api/users', async (req, res) => {
-    const cacheKey = 'users:even';
-    const cached = await client.get(cacheKey);
-    if (cached) {
-        return res.json(JSON.parse(cached));
-    }
-    const result = users.filter(user => user.id % 2 === 0);
-    await client.setEx(cacheKey, 600, JSON.stringify(result));
-    res.json(result);
-});
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-{{< /highlight >}}
-
-Chạy Redis và test: latency giảm, CPU usage thấp.
-
-**So sánh**: Spring Cache ở Java declarative (annotation), Redis npm ở Node.js manual nhưng linh hoạt.
+Cải thiện: Latency <50ms on hit (Redis sub-ms), throughput tăng 10x nếu cache hit 80%.
 
 ## Tối ưu 3: Async Processing
 
-- **Java**: Dùng `@Async` cho background tasks.
-  Cập nhật UserController.java:
-{{< highlight java >}}
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
-import java.util.concurrent.CompletableFuture;
+Async tách blocking work khỏi main thread, dùng thread pool (Java) hoặc event loop (Node) để non-block. Nguyên tắc: Offload I/O/CPU to background, return fast response, callback khi done.
 
-@EnableAsync
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-    // ... (khởi tạo users và redisTemplate như trên)
+Java @Async + CompletableFuture compose chains, thread pool executor manage concurrency.
 
-    @GetMapping
-    @Async
-    public CompletableFuture<List<User>> getUsers() {
-        String cacheKey = "users:even";
-        List<User> cached = redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return CompletableFuture.completedFuture(cached);
-        }
-        List<User> result = users.stream()
-                .filter(user -> user.getId() % 2 == 0)
-                .collect(Collectors.toList());
-        redisTemplate.opsForValue().set(cacheKey, result, 10, TimeUnit.MINUTES);
-        return CompletableFuture.completedFuture(result);
-    }
+Node.js async/await wrap Promises, libuv pool cho I/O (DNS, file), cluster cho multi-core.
+
+Ví dụ Java @Async:
+```java
+@Async
+public CompletableFuture<List<User>> getUsersAsync() {
+    return CompletableFuture.supplyAsync(() -> computeUsers());
 }
-{{< /highlight >}}
+```
 
-Cần `@EnableAsync` trong config class. API trả kết quả ngay, xử lý nặng chạy nền.
-
-- **Node.js**: Dùng async/await.
-  Cập nhật server.js:
-{{< highlight javascript >}}
+Node.js:
+```javascript
 app.get('/api/users', async (req, res) => {
-    const cacheKey = 'users:even';
-    const cached = await client.get(cacheKey);
-    if (cached) {
-        return res.json(JSON.parse(cached));
-    }
-    // Giả lập async task
-    const result = await new Promise(resolve => {
-        setImmediate(() => resolve(users.filter(user => user.id % 2 === 0)));
-    });
-    await client.setEx(cacheKey, 600, JSON.stringify(result));
+    const result = await computeUsersAsync();
     res.json(result);
 });
-{{< /highlight >}}
+```
 
-**So sánh**: @Async ở Java dễ, CompletableFuture mạnh cho parallel; async/await ở Node.js đơn giản cho I/O.
+Cải thiện: Response time <100ms, throughput tăng do non-block.
 
 ## Ưu nhược điểm tổng hợp
 

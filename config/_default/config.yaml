@@ -42,21 +42,21 @@ params:
     name: "Trần Việt Hưng"
     tagline: -- Code vs. Me --
     location: "Lâm Đồng - Việt Nam"
-    photo: profile.jpg
+    photo: profile3.jpg
   social:
     title: Links
     list:
       - icon: fab fa-linkedin-in
-        url: "#"
+        url: "https://www.linkedin.com/in/h%C6%B0ng-tr%E1%BA%A7n-b87909353/"
         title: LinkedIn
       - icon: fab fa-stack-overflow
         url: "#"
         title: StackOverflow
       - icon: fab fa-github
-        url: "#"
+        url: "https://github.com/TranHung-IT"
         title: GitHub
       - icon: fab fa-twitter
-        url: "#"
+        url: ""
         title: Twitter
       - icon: fab fa-orcid
         url: "#"
