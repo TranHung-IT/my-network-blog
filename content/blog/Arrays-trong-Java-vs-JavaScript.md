@@ -18,12 +18,11 @@ categories = [
 ]
 +++
 
-Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series về lập trình với Java vs JavaScript. Sau bài về Cấu trúc Điều khiển – nơi code bắt đầu "suy nghĩ" với if-else và loops – hôm nay, bài 2: **Arrays** – cấu trúc dữ liệu đầu tiên giúp bạn lưu trữ và xử lý "danh sách" thông tin, như điểm số học sinh hay danh sách tên bạn bè. Nếu bạn là sinh viên năm nhất hoặc mới tự học code, arrays là bước ngoặt từ biến đơn lẻ sang dữ liệu nhóm, giúp code hiệu quả hơn mà không lặp lại lệnh.
-
-Ta sẽ hình dung arrays giống hộp đựng đồ theo thứ tự. Java coi arrays như "hộp cố định, chỉ đựng đồ cùng loại", JS thì như một "hộp co giãn, đựng hỗn hợp". Chúng khác nhau ở cách quản lý kích thước, kiểu dữ liệu, và phương thức xử lý – Java an toàn cho dự án lớn, JS linh hoạt cho web động. Hãy cùng khám phá để bạn tự tin dùng arrays trong bài tập đầu tiên!
+Chào các bạn! Tiếp tục series Lập trình với Java vs JavaScript, hôm nay chúng ta đến với **Arrays – cấu trúc dữ liệu** đầu tiên giúp code lưu trữ và xử lý danh sách thông tin như điểm số hay tên bạn bè. Nếu ở bài trước, code mới “biết suy nghĩ” với if-else và vòng lặp, thì lần này nó học cách “nhớ” nhiều giá trị cùng lúc. Mình từng suýt phát điên khi phải khai báo 20 biến điểm cho bài tập, cho đến khi biết tới arrays. 😅 Cùng xem cách Java và JS xử lý chúng như thế nào nhé! 📦
 
 ## Arrays: Vai trò và nguyên tắc hoạt động cơ bản
 
+### Kiến thức cốt lõi
 Arrays là cấu trúc dữ liệu tuyến tính (linear data structure), lưu trữ tập hợp các phần tử có thứ tự cố định, truy cập nhanh qua chỉ số (index bắt đầu từ 0). Vai trò chính: Nhóm dữ liệu liên quan để xử lý hàng loạt, tiết kiệm bộ nhớ và thời gian so với nhiều biến riêng lẻ. Ví dụ, thay vì 10 biến score1, score2..., dùng một array scores[] để lưu 10 điểm số.
 
 Nguyên tắc cốt lõi: 
@@ -50,8 +49,12 @@ int[] scores = {90, 85, 95}; // Fixed size 3, typed int
 let scores = [90, 85, 95]; // Dynamic, mixed types ok
 ```
 
+### Góc nhìn cá nhân
+Theo trải nghiệm của mình, Java với arrays cố định kích thước buộc mình phải tính toán trước — hơi cứng nhắc nhưng lại giúp quen dần với tư duy lập trình chặt chẽ. Ngược lại, JavaScript thì linh hoạt như một “hộp ma thuật” vậy, muốn thêm phần tử lúc nào cũng được, rất tiện khi thử nghiệm web app. Có điều, kiểu dữ liệu lẫn lộn đôi khi khiến mình rối tung. Nếu bạn mới học, cứ làm quen với Java trước để hiểu rõ typed, rồi thử qua JS để thấy sự khác biệt. Bạn đã từng dùng array để đỡ phải tạo cả chục biến chưa? 😊
+
 ## Truy cập và Sửa đổi Phần tử: Chỉ số và Giới hạn
 
+### Kiến thức cốt lõi
 Truy cập qua array[index], sửa đổi bằng array[index] = value – đơn giản như lấy/sắp xếp đồ trong hộp theo vị trí. Giới hạn: Vượt index gây lỗi (Java: ArrayIndexOutOfBoundsException ở compile/runtime, JS: undefined – im lặng nhưng có thể crash sau).
 
 Lý thuyết sâu: Arrays lưu trữ contiguous memory (liên tục trong RAM), nên truy cập nhanh nhưng insert/delete giữa mảng yêu cầu shift (dịch chuyển) các phần tử sau, tốn O(n). Để tránh, dùng linked list (nhưng phức tạp hơn cho beginner).
@@ -77,8 +80,12 @@ scores[0] = 100;
 console.log(scores.length); // 3 (có thể thay đổi sau)
 ```
 
+### Góc nhìn cá nhân 
+Mình từng bị Java ném ArrayIndexOutOfBounds khi quên kiểm tra length trong lab – bài học đắt giá! JS thì "thân thiện" hơn với undefined, giúp debug nhanh cho dự án nhỏ, nhưng mình phải thêm if check để tránh bug sau. Cá nhân mình thích negative index của JS khi lấy phần tử cuối, tiết kiệm não. Bạn hay gặp lỗi index out of bound không?
+
 ## Các Hoạt động Phổ biến: Duyệt, Tìm kiếm và Biến đổi
 
+### Kiến thức cốt lõi
 Duyệt arrays: Sử dụng loops (for/while từ bài trước) để xử lý từng phần tử – linear scan O(n). Tìm kiếm: Linear (duyệt hết) hoặc binary (nếu sorted, O(log n) – chia đôi mảng).
 
 Lý thuyết: Arrays hiệu quả cho read-heavy (đọc nhiều), kém cho write-heavy (ghi nhiều). Biến đổi: Tạo mảng mới từ cũ (immutable tốt hơn mutable để tránh side-effect).
@@ -103,6 +110,9 @@ Arrays.sort(scores); // [85, 90, 95]
 scores.sort((a, b) => a - b); // Ascending
 ```
 
+### Góc nhìn cá nhân
+Trong môn học, mình dùng enhanced for của Java để duyệt scores – đơn giản nhưng hơi "cổ điển". Còn JS's map/filter thì như "phép màu" cho dự án web, chain lại code ngắn gọn, giúp mình hoàn thành bài tập nhóm nhanh hơn. Mình khuyên beginner: Học for loop trước, rồi thử functional ở JS để thấy sự khác biệt. Bạn thích duyệt array kiểu nào?
+
 ## Ưu nhược điểm tổng hợp
 
 | Tiêu chí          | Java Arrays                   | JS Arrays                    |
@@ -115,12 +125,13 @@ scores.sort((a, b) => a - b); // Ascending
 
 Java dạy kỷ luật dữ liệu, JS khuyến khích thử nghiệm.
 
+### Tổng kết
+Java fixed size như "kế hoạch học tập nghiêm ngặt", JS dynamic như "danh sách việc cần làm linh hoạt". Mình dùng Java cho bài tập lớn ở trường, JS cho prototype nhanh. Không cái nào tốt hơn – tùy nhu cầu!
+
 ## Kết luận: Xây dựng thói quen với Arrays
 
-Arrays là "danh sách" đầu tiên bạn cần – bắt đầu bằng khai báo fixed đơn giản, practice duyệt với loop từ bài trước. Java giúp bạn nghĩ về kích thước trước, JS dạy thích nghi thay đổi. Kết hợp chúng: Dùng arrays để lưu input user, xử lý với control structures!
+Arrays là "danh sách" đầu tiên bạn cần – bắt đầu bằng khai báo fixed đơn giản, practice duyệt với loop từ bài trước. Java giúp bạn nghĩ về kích thước trước, JS dạy thích nghi thay đổi. Kết hợp chúng: Dùng arrays để lưu input user, xử lý với control structures! Mình đã áp dụng trong đồ án nhỏ, và code sạch hơn hẳn.
 
-Bạn hay dùng arrays cho gì đầu tiên? Comment chia sẻ nhé. Bài sau: Strings trong Java vs JS. Theo dõi series để vững cơ bản từng bước!
-
-Happy arraying! 📊🔢
+Bạn hay dùng arrays cho gì đầu tiên? Bài sau: Strings trong Java vs JS. Theo dõi series để vững cơ bản từng bước. Happy arraying! 📊🔢
 
 <!--more-->

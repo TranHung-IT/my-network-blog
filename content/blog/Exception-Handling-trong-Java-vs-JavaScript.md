@@ -19,12 +19,11 @@ categories = [
 ]
 +++
 
-Chào các bạn! Mình là Trần Việt Hưng, tiếp tục series Lập trình với Java vs JavaScript. Sau bài về Inheritance và Polymorphism – nơi bạn học cách mở rộng OOP để code linh hoạt hơn – hôm nay, bài 7: **Exception Handling** – "lá chắn" bảo vệ chương trình khỏi lỗi bất ngờ, như chia cho 0 hoặc file không tồn tại, giúp code graceful failure thay vì crash thô. Nếu bạn là sinh viên năm nhất hoặc mới tự học, xử lý lỗi là kỹ năng quan trọng: Không chỉ fix bug, mà dự đoán và handle chúng, làm app thực tế hơn như web form validate input.
-
-Exceptions như là một "báo động khẩn cấp" – catch để dập lửa, throw để báo lên. Java dùng checked/unchecked exceptions (compile enforce), JS errors (runtime, async-friendly). Chúng khác ở hierarchy (Java Throwable, JS Error), propagation (Java throws, JS rethrow), và best practices (Java finally, JS async/await try-catch). Hãy cùng khám phá để bạn viết code "bulletproof" từ bài tập đơn giản!
+Chào các bạn! Mình là Trần Việt Hưng, cùng quay lại với series Lập trình với Java vs JavaScript. Ở bài này, chúng ta nói về **Exception Handling** – “lá chắn” giúp chương trình không gục ngã trước những tình huống ngoài ý muốn như chia cho 0 hay đọc file không tồn tại. Đây là kỹ năng mà ai viết code thật cũng phải đối mặt sớm muộn: không chỉ sửa lỗi, mà còn phải đoán trước lỗi sẽ xảy ra ở đâu. Mình từng quên đặt try-catch trong đồ án Java và chương trình crash ngay trước mặt thầy – cú ngã đáng nhớ nhất học kỳ đó. Giờ thì cùng tìm hiểu cách giúp code “ngã mà không đau” nhé. 🧯
 
 ## Exception Handling: Vai trò và nguyên tắc hoạt động cơ bản
 
+### Kiến thức cốt lõi
 Exception Handling là cơ chế bắt (catch) và xử lý (handle) lỗi runtime, ngăn chương trình dừng đột ngột. Vai trò chính: Robustness (tiếp tục chạy), debugging (trace lỗi rõ ràng), separation of concerns (logic chính tách khỏi error code). Không handle, lỗi lan tỏa (propagation) gây crash; có handle, recover hoặc log graceful.
 
 Nguyên tắc cốt lõi:
@@ -59,8 +58,12 @@ try {
 }
 ```
 
+### Góc nhìn cá nhân
+Với mình, Java luôn nghiêm khắc — checked exception cứ như lời nhắc của thầy: “Em phải xử lý trường hợp xấu nữa chứ”. Còn JavaScript thì thoải mái hơn, kiểu “cứ chạy đi rồi tính”, nên đôi khi mình quên catch và console đỏ lòm. Mỗi ngôn ngữ dạy mình một bài học: Java dạy cẩn thận, JS dạy ứng biến. Bạn thì sao, có lần nào lỗi bất ngờ khiến bạn học được điều gì chưa? 😄
+
 ## Khai báo và Ném Lỗi: Throws, Throw và Types
 
+### Kiến thức cốt lõi
 Khai báo: Java method throws Exception (checked), JS no need. Throw: Tạo instance Error/Exception, ném khi condition sai (validation).
 
 Lý thuyết sâu: Propagation: Lỗi "leo thang" stack trace đến handler đầu tiên. Custom exceptions: Extend Exception (Java) hoặc Error (JS) cho domain-specific. Checked vs Unchecked: Checked force handle (IO errors), unchecked cho programming errors (NullPointer).
@@ -84,8 +87,12 @@ throw new IllegalArgumentException("Input invalid");
 throw new Error("Input invalid");
 ```
 
+### Góc nhìn cá nhân
+Mình từng dùng throws ở Java method để "đẩy trách nhiệm" lên caller – tiện cho team lab, nhưng JS throw simple thì nhanh hơn khi prototype validation form. Custom Error ở JS giúp log rõ ràng hơn cho dự án cá nhân. Cá nhân mình thích Java throws cho structure, JS cho speed. Bạn hay throw lỗi kiểu gì?
+
 ## Các Hoạt động Phổ biến: Finally, Propagation và Best Practices
 
+### Kiến thức cốt lõi
 Finally: Chạy sau try/catch (cleanup), Java native, JS Promise.finally(). Propagation: Rethrow (throw e; sau log). Best practices: Don't swallow errors (catch nhưng log/rethrow), specific catches, fail-fast (throw sớm).
 
 Lý thuyết: Stack trace: Traceback lỗi (line/method), Java getStackTrace(), JS e.stack. Global handlers: Java Thread.setDefaultUncaughtExceptionHandler(), JS window.onerror.
@@ -121,6 +128,9 @@ try {
 }
 ```
 
+### Góc nhìn cá nhân
+Finally ở Java cứu mình khỏi quên close file trong lab – auto-cleanup siêu tiện! JS .finally() cho promises thì mượt mà với async fetch ở dự án web. Mình khuyên: Luôn log e.stack trước rethrow để debug dễ. Bạn thấy finally hữu ích ở đâu?
+
 ## Ưu nhược điểm tổng hợp
 
 | Tiêu chí              | Java Exception Handling      | JS Exception Handling        |
@@ -134,12 +144,13 @@ try {
 
 Java enforce discipline, JS quick recovery.
 
+### Tổng kết
+Bảng này như so sánh "bảo hiểm toàn diện" (Java) vs "first-aid kit nhanh" (JS) trong học lập trình của mình. Java checked giúp code robust ở đồ án trường, JS async catch cho web mượt mà. Không cái nào vượt trội – mình dùng Java cho backend, JS cho frontend!
+
 ## Kết luận: Làm code an toàn hơn với Exceptions
 
-Exception handling biến lỗi thành cơ hội học hỏi – thử wrap division trong try-catch, throw nếu input âm. Java dạy proactive handling, JS reactive cho dynamic. Kết hợp với OOP từ bài trước để custom exceptions!
+Exception handling biến lỗi thành cơ hội học hỏi – thử wrap division trong try-catch, throw nếu input âm. Java dạy proactive handling, JS reactive cho dynamic. Kết hợp với OOP từ bài trước để custom exceptions! Mình đã áp dụng trong bài tập, và app ít crash hơn hẳn.
 
-Bạn từng gặp lỗi gì thú vị? Comment chia sẻ nhé. Bài sau: Collections và Data Structures nâng cao trong Java vs JS. Tiếp tục series để code production-ready!
-
-Happy error-handling! 🛡️⚠️
+Bạn từng gặp lỗi gì thú vị? Bài sau: Collections và Data Structures nâng cao trong Java vs JS. Tiếp tục series để code production-ready. Happy error-handling! 🛡️⚠️
 
 <!--more-->
